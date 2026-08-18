@@ -1,0 +1,26 @@
+[package]
+name = "react-luau-props"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.97"
+description = "Compiles React-Luau prop types for Roblox UI classes from Roblox's own API dump"
+repository = "https://github.com/rbx-forge/react-luau-props"
+license = "MPL-2.0"
+publish = false
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+ureq = { version = "3", features = ["json"] }
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+# Conventions for published APIs. This crate is a tool, not a library anyone
+# depends on, and its errors are already described where they are raised.
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"

@@ -1,0 +1,11 @@
+# The vendored dump is hashed byte for byte and Roblox serves it with CRLF, so
+# git must never rewrite its line endings. Without this, a checkout on Windows
+# changes the digest and `check` fails on a clean tree.
+vendor/** -text
+
+# The generated file is compared against freshly compiled output, which is
+# always written with LF.
+generated/** -text
+
+# Everything else is source, normalised to LF regardless of platform.
+* text=auto eol=lf

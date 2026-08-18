@@ -1,0 +1,8 @@
+# Deliberately close to empty. StyLua's defaults are what the Roblox ecosystem
+# actually runs: Roact, rojo, react-lua, luau-lsp and Nevermore all leave
+# indentation alone, and every one of them ends up on tabs. The generated file
+# matches that, so a project which has not configured its formatter never sees
+# a diff on it.
+#
+# `syntax` is set because the artifact is Luau rather than Lua.
+syntax = "Luau"

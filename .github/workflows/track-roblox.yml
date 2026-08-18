@@ -1,0 +1,118 @@
+name: Track Roblox
+
+# Refetches the API dump and recompiles. Opens an issue only when the generated
+# types actually move, which is the difference that matters: Roblox ships a
+# version most weeks, and over six of them the UI surface gained one class and
+# three properties. Gating on the version number would mean a notification a
+# week that is almost always nothing to do.
+#
+# Thursday 06:00 UTC, read off Roblox's own DeployHistory rather than guessed.
+# Its timestamps are Pacific, not UTC: the 0.735.0 Studio64 line reads 15:48
+# while the CDN stamps that upload `Mon, 17 Aug 2026 22:49:30 GMT`, seven hours
+# later. Converted, the 146 Studio64 deployments of 2026 run from 11:00 to 03:00
+# UTC in summer and 12:00 to 04:00 in winter, so the last one can land at 04:59
+# and 06:00 leaves the full hour of margin in both regimes. Tuesday carries most
+# of them, with Monday and Wednesday behind it; running on Thursday catches all
+# three in the same week.
+
+on:
+  schedule:
+    - cron: "0 6 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Refetch and recompile
+        id: refresh
+        run: |
+          set -euo pipefail
+          cargo run --locked -- fetch
+          cargo run --locked -- generate
+
+          version=$(jq -r .roblox_version generated/manifest.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if git diff --quiet -- generated/UiProps.luau; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Roblox $version changes nothing in the UI surface"
+          elif git ls-remote --exit-code --heads origin "track/$version" >/dev/null 2>&1; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "track/$version already exists, so $version was already prepared"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Nothing here starts a new workflow run: work done with GITHUB_TOKEN does
+      # not trigger workflows. The checks therefore run in this job, and the
+      # issue states their result.
+      - name: Verify
+        if: steps.refresh.outputs.changed == 'true'
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
+          cargo run --locked -- check
+
+      # A branch and an issue rather than a pull request: the organization does
+      # not let Actions open pull requests, and an issue notifies just as well
+      # while leaving the pull request to a human.
+      - name: Push the branch and open an issue
+        if: steps.refresh.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.refresh.outputs.version }}
+        run: |
+          set -euo pipefail
+          base="$GITHUB_REF_NAME"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "track/$VERSION"
+          git add vendor generated
+          git commit -m "chore: refetch the API dump for Roblox $VERSION and recompile"
+          git push --set-upstream origin "track/$VERSION"
+
+          # Property lines only, so the summary reads as what changed for a
+          # consumer rather than as a file diff.
+          added=$(git diff "origin/$base" -- generated/UiProps.luau | grep -c '^+\s*[A-Za-z]' || true)
+          removed=$(git diff "origin/$base" -- generated/UiProps.luau | grep -c '^-\s*[A-Za-z]' || true)
+
+          {
+            echo "Roblox is deploying \`$VERSION\`, and the UI surface moved with it."
+            echo
+            echo "The dump was refetched and the types recompiled on \`track/$VERSION\`."
+            echo "Format, lint, tests and \`check\` all passed in [the job that prepared"
+            echo "it](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+            echo
+            echo "**Open the pull request:** https://github.com/$GITHUB_REPOSITORY/compare/$base...track/$VERSION?expand=1"
+            echo
+            echo "## What moved"
+            echo
+            echo "\`$added\` property lines added, \`$removed\` removed."
+            echo
+            echo '```diff'
+            git diff "origin/$base" -- generated/UiProps.luau |
+              grep -E '^[+-]\s*[A-Za-z]|^[+-]export' | head -60 || true
+            echo '```'
+            echo
+            echo "Read that diff before merging. A removed property is a property"
+            echo "Roblox stopped letting a script assign, so it is the half worth"
+            echo "checking against your own code."
+          } > "$RUNNER_TEMP/body.md"
+
+          gh issue create --title "Roblox $VERSION moves the UI surface" --body-file "$RUNNER_TEMP/body.md"
