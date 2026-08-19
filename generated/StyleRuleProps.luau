@@ -288,8 +288,11 @@ export type StyleRuleProps = {
 	["::UITableLayout"]: Modifier?,
 	["::UITextSizeConstraint"]: Modifier?,
 
-	-- the rule's own properties
-	Priority: (number | Token)?,
+	-- the rule's own properties. NOT widened with Token: a "$Name"
+	-- reference is resolved by the engine for a STYLED property, the kind
+	-- that goes in through SetProperties. These are properties of the rule
+	-- instance itself, assigned directly, and a string would fail the cast.
+	Priority: number?,
 
 	-- the declarative spelling of SetPropertyTransitions and
 	-- SetDefaultPropertyTransition, which the dump still declares

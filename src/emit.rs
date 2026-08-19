@@ -245,10 +245,16 @@ pub fn emit_style(flat: &Flat, indent: Indent) -> Emitted {
     // intersection, and both are read from the dump rather than written down.
     if !flat.rule_properties.is_empty() {
         out.push('\n');
-        let _ = writeln!(out, "{tab}-- the rule's own properties");
+        let _ = writeln!(
+            out,
+            "{tab}-- the rule's own properties. NOT widened with Token: a \"$Name\"\n{tab}-- reference is resolved by the engine for a STYLED property, the kind\n{tab}-- that goes in through SetProperties. These are properties of the rule\n{tab}-- instance itself, assigned directly, and a string would fail the cast."
+        );
         for property in &flat.rule_properties {
-            let union = property.luau.join(" | ");
-            let _ = writeln!(out, "{tab}{}: ({union} | Token)?,", property.name);
+            let mut union = property.luau.join(" | ");
+            if property.luau.len() > 1 {
+                union = format!("({union})");
+            }
+            let _ = writeln!(out, "{tab}{}: {union}?,", property.name);
             properties += 1;
         }
     }

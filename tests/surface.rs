@@ -352,10 +352,16 @@ fn the_styling_type_carries_the_rules_own_keys() {
     let built = flat(false);
     let emitted = emit::emit_style(&built, emit::Indent::default());
 
-    // StyleRule.Priority is a real property, so it arrives widened like any
-    // other and with the type the engine gives it.
+    // StyleRule.Priority is a real property, with the type the engine gives it.
     assert!(built.rule_properties.iter().any(|p| p.name == "Priority"));
-    assert!(emitted.source.contains("Priority: (number | Token)?,"));
+
+    // And NOT widened with Token, unlike everything the rule paints. A "$Name"
+    // reference is resolved by the engine for a styled property, the kind that
+    // goes in through SetProperties. The rule's own properties are assigned
+    // directly onto the instance, so a string would fail the cast at runtime --
+    // a type that accepted one would permit code that cannot work.
+    assert!(emitted.source.contains("Priority: number?,"));
+    assert!(!emitted.source.contains("Priority: (number | Token)?,"));
 
     // Selector is the one StyleRule property a declarative wrapper owns
     // structurally: it is the table's key, so a field would compete with it.
