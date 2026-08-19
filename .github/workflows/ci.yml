@@ -31,22 +31,24 @@ jobs:
       - name: Test
         run: cargo test --locked
 
-      # The tests cover the filters; this covers the artifact. A failure reads
-      # plainly: the committed UiProps.luau is no longer what the vendored dump
-      # compiles to, whether because the file was edited or the generator moved.
+      # The tests cover the filters; this covers the artifacts. A failure reads
+      # plainly: a committed file is no longer what the vendored dump compiles
+      # to, whether because it was edited or the generator moved. Both targets
+      # are checked, so one cannot be refreshed while the other silently is not.
       - name: Types are current
         run: cargo run --locked -- check
 
-      # The generated file is downloaded straight into other people's projects,
-      # so it has to survive their formatter untouched. Checked from a directory
-      # with no stylua.toml, because what matters is the default a project that
-      # has configured nothing will run, not this repository's own settings.
-      - name: Generated file needs no formatting
+      # The generated files are downloaded straight into other people's
+      # projects, so they have to survive their formatter untouched. Checked
+      # from a directory with no stylua.toml, because what matters is the
+      # default a project that has configured nothing will run, not this
+      # repository's own settings.
+      - name: Generated files need no formatting
         run: |
           curl -fsSL -o stylua.zip \
             https://github.com/JohnnyMorganz/StyLua/releases/download/v2.5.2/stylua-linux-x86_64.zip
           unzip -q stylua.zip -d "$RUNNER_TEMP/bin"
           mkdir -p "$RUNNER_TEMP/unconfigured"
-          cp generated/UiProps.luau "$RUNNER_TEMP/unconfigured/"
+          cp generated/UiProps.luau generated/StyleRuleProps.luau "$RUNNER_TEMP/unconfigured/"
           cd "$RUNNER_TEMP/unconfigured"
-          "$RUNNER_TEMP/bin/stylua" --check UiProps.luau
+          "$RUNNER_TEMP/bin/stylua" --check UiProps.luau StyleRuleProps.luau

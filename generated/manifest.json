@@ -2,8 +2,11 @@
   "roblox_version": "0.735.0.7351131",
   "roblox_upload": "version-dcbeee682ce74ee0",
   "dump_sha256": "346488fbc720797f094e6ac6deaa98fee8654676f15752128bd94fabbcf1e5c0",
-  "types_sha256": "3df19254f07028f854e3eafd3c1f11fa6006a5ee2aae8ed6ab9849d1fb20791f",
+  "types_sha256": "e6b35e3496f5de5deca172434df3d2bce83facb1d93cc2a65d6ebbf854e52989",
   "classes": 34,
-  "properties": 882,
-  "skipped_deprecated": 106
+  "properties": 890,
+  "skipped_deprecated": 106,
+  "style_sha256": "f9373f72e8c671808765aa44311f9288798d2358a35fc089112305314bb95ca3",
+  "style_properties": 235,
+  "style_modifiers": 15
 }

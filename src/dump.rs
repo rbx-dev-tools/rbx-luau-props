@@ -108,13 +108,28 @@ pub enum Capabilities {
     Uniform(Vec<String>),
 }
 
+/// The capability that actually blocks an ordinary script.
+///
+/// `Capabilities` describes Roblox's *sandboxing* system, not assignability: it
+/// names the capability a script must hold, and a script running outside a
+/// sandboxed container holds every ordinary one. Treating a non-empty list as a
+/// gate was too strict, and `StyleRule.Priority` is the proof -- it carries
+/// `Write: ["UI"]`, Sculpt assigns it, and the `06_States` story in
+/// stylesheet-lab depends on it working.
+///
+/// `CapabilityControl` is the exception, because it governs the sandbox itself:
+/// `Instance.Capabilities` and `Instance.Sandboxed` are the two properties that
+/// carry it, and neither belongs in a props table.
+const SANDBOX_CONTROL: &str = "CapabilityControl";
+
 impl Capabilities {
     fn gates_writing(&self) -> bool {
+        let blocks = |list: &Vec<String>| list.iter().any(|c| c == SANDBOX_CONTROL);
         match self {
-            Capabilities::Split { write } => write.as_ref().is_some_and(|w| !w.is_empty()),
+            Capabilities::Split { write } => write.as_ref().is_some_and(blocks),
             // Only reached for members that are not properties, which are
             // filtered out before this is asked.
-            Capabilities::Uniform(list) => !list.is_empty(),
+            Capabilities::Uniform(list) => blocks(list),
         }
     }
 }

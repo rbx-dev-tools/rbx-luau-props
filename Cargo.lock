@@ -549,7 +549,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "react-luau-props"
+name = "rbx-luau-props"
 version = "0.1.0"
 dependencies = [
  "anyhow",

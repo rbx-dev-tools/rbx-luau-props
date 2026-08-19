@@ -1,10 +1,10 @@
 [package]
-name = "react-luau-props"
+name = "rbx-luau-props"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.97"
-description = "Compiles React-Luau prop types for Roblox UI classes from Roblox's own API dump"
-repository = "https://github.com/rbx-forge/react-luau-props"
+description = "Compiles Luau prop types for Roblox UI classes from Roblox's own API dump: React props, and StyleRule properties"
+repository = "https://github.com/rbx-forge/rbx-luau-props"
 license = "MPL-2.0"
 publish = false
 

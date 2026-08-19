@@ -1,7 +1,11 @@
-# react-luau-props
+# rbx-luau-props
 
 Luau prop types for every Roblox UI class, compiled from Roblox's own API dump
 rather than written by hand.
+
+Two files, one derivation. They differ only in who is going to write the table.
+
+**`UiProps.luau`** — one type per class, for a React `createElement` call:
 
 ```lua
 local UiProps = require(ReplicatedStorage.Libraries.UiProps)
@@ -17,21 +21,47 @@ local function Card(props: { title: string, native: UiProps.Frame? })
 end
 ```
 
-**[Download `UiProps.luau`](https://raw.githubusercontent.com/rbx-forge/react-luau-props/main/generated/UiProps.luau)**
-&nbsp;·&nbsp;
-[browse it](generated/UiProps.luau)
-&nbsp;·&nbsp;
-[what it was built from](generated/manifest.json)
+**`StyleRuleProps.luau`** — one flat type, for a `StyleRule`:
 
-That one file is the whole story for almost everyone: put it in your project and
+```lua
+local StyleRuleProps = require(ReplicatedStorage.Libraries.StyleRuleProps)
+
+local rule: StyleRuleProps.StyleRuleProps = {
+    BackgroundColor3 = "$Surface",          -- a "$Token" reference, hence the widening
+    Priority = 30,
+    ["::UICorner"] = { CornerRadius = "$RadiusMd" },
+    Transition = { BackgroundColor3 = TweenInfo.new(0.15) },
+    BackgroundColour3 = Color3.new(),       -- a type error, and nothing else would catch it
+}
+```
+
+A `StyleRule` names what it paints with a selector *string*, so no type can know
+which class a rule targets: the flat union over the whole surface is the only
+shape available. It closes with `[string]: nil`, which is the point — measured
+against Studio, `SetProperties` accepts an unknown property name with no error
+and no warning, and `GetProperties` shows it is stored. Nothing below the type
+catches a typo, not the call, not the paint, and not a diff, since a rule's
+properties live in a hidden `BinaryString`.
+
+**[`UiProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/UiProps.luau)**
+&nbsp;·&nbsp;
+**[`StyleRuleProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/StyleRuleProps.luau)**
+&nbsp;·&nbsp;
+[what they were built from](generated/manifest.json)
+
+Those files are the whole story for almost everyone: put one in your project and
 require it. The Rust crate here is not something you install. It exists to
-produce the file and to prove, on every change, that the file is still what the
-engine describes.
+produce them and to prove, on every change, that they are still what the engine
+describes.
 
 | You are | What you run |
 | --- | --- |
-| using the types in a game | nothing. Download `generated/UiProps.luau` |
+| using the types in a game | nothing. Download the file you need |
 | refreshing this repository after a Roblox release | `cargo run -- fetch`, then `cargo run -- generate` |
+
+Both files are always generated together. A flag would only create the state
+where one is refreshed and the other silently is not, which is what `check`
+exists to make impossible.
 
 ## What it is for
 
@@ -71,8 +101,17 @@ puts a property in your types that the engine will refuse at runtime:
 | --- | --- |
 | `MemberType` is `Property` | methods and events |
 | `Security.Write` is `None` | `ScrollingFrame.SmoothScroll`, `Instance.RobloxLocked` |
-| no `Capabilities.Write` | `Instance.Capabilities` |
+| no `CapabilityControl` in `Capabilities.Write` | `Instance.Capabilities`, `Instance.Sandboxed` |
 | not tagged `ReadOnly` or `NotScriptable` | `TextLabel.ContentText`, `GuiObject.AbsoluteSize` |
+
+The capability gate is narrower than it first looks, and deliberately so.
+`Capabilities` describes Roblox's *sandboxing* system: it names the capability a
+script must hold, and a script outside a sandboxed container holds every
+ordinary one. Treating any non-empty `Write` list as a gate was too strict, and
+`StyleRule.Priority` is the counter-example — it carries `Write: ["UI"]`, and it
+is assigned by working code. Only `CapabilityControl` really blocks, because it
+governs the sandbox itself; the two properties carrying it are the two that have
+no business in a props table anyway.
 
 `Hidden` is deliberately *not* a gate. `TextLabel.Font` carries it while
 remaining the property most existing code sets; filtering on the tag would
@@ -106,18 +145,33 @@ fail there rather than reaching a consumer.
 `--require` sets the expression the generated file requires React from,
 defaulting to `ReplicatedStorage.Packages.React`.
 
-## The indexer
+## The indexers
 
-The generated types end with `[any]: any`. It is what makes the keys that are
-not strings acceptable: `[React.Event.X]`, `[React.Change.X]` and `[React.Tag]`.
+The two files close differently, and the difference is the whole reason they are
+two files.
+
+`UiProps.luau` ends with `[any]: any`. It is what makes the keys that are not
+strings acceptable: `[React.Event.X]`, `[React.Change.X]` and `[React.Tag]`.
 
 It costs one thing and only one: reading an undeclared field stops being an
 error. Writing one was never checked either way, because Luau runs no
-excess-property check of its own. Every property you do declare is still
-checked as it was.
+excess-property check of its own. Every property you do declare is still checked
+as it was.
 
-Your own component's props can ask for that check with `[string]: nil`. It
-cannot apply here, since it rejects the three markers above.
+`StyleRuleProps.luau` ends with `[string]: nil`, which is the check React cannot
+have — a misspelled property becomes a type error. A `StyleRule` table carries
+no non-string markers, so nothing stands in the way.
+
+Two consequences follow from the strict form, both measured rather than assumed:
+
+- It only works on a **flat** type. Inside an intersection, the member carrying
+  `[string]: nil` demands that every string key be `nil`, including the ones its
+  siblings declare, so even a valid property is rejected.
+- A consumer therefore cannot add keys of its own by intersecting. That is why
+  the rule's own properties and the `Transition` key are emitted into the file,
+  and why both are read from the dump rather than written down: `Priority` is a
+  real `StyleRule` property, and `Transition` is emitted only while the dump
+  still declares `SetPropertyTransitions` behind it.
 
 ## Keeping it current
 
@@ -143,7 +197,7 @@ engine release this repository has been refreshed against. A one-line recipe is
 usually the whole integration:
 
 ```sh
-URL=https://raw.githubusercontent.com/rbx-forge/react-luau-props/main/generated/UiProps.luau
+URL=https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/UiProps.luau
 curl -fsSL "$URL" -o src/shared/UiProps.luau
 ```
 

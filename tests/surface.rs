@@ -2,7 +2,7 @@
 //! properties the engine really exposes end up in the file, and the ones it
 //! refuses to let a script assign stay out of it.
 
-use react_luau_props::{dump, emit, ir};
+use rbx_luau_props::{dump, emit, ir};
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 fn root() -> PathBuf {
@@ -10,10 +10,17 @@ fn root() -> PathBuf {
 }
 
 fn surface(include_deprecated: bool) -> ir::Surface {
-    let bytes = fs::read(root().join(react_luau_props::VENDORED_DUMP))
-        .expect("vendored dump; run `react-luau-props fetch`");
+    let bytes = fs::read(root().join(rbx_luau_props::VENDORED_DUMP))
+        .expect("vendored dump; run `rbx-luau-props fetch`");
     let parsed = dump::parse(&bytes).expect("the vendored dump parses");
-    ir::build(&parsed, ir::Options { include_deprecated }).expect("the surface builds")
+    ir::build(
+        &parsed,
+        ir::Options {
+            include_deprecated,
+            target: ir::Target::React,
+        },
+    )
+    .expect("the surface builds")
 }
 
 fn properties(surface: &ir::Surface) -> BTreeMap<&str, BTreeMap<&str, &str>> {
@@ -215,4 +222,189 @@ fn every_class_carries_the_indexer() {
         .filter(|line| line.trim() == "[any]: any,")
         .count();
     assert_eq!(fields, surface.classes.len());
+}
+
+// --- the styling target -------------------------------------------------
+//
+// A StyleRule is written against a selector string, so it gets one flat type
+// over the whole surface rather than one per class. What follows pins the four
+// things that shape is for.
+
+fn flat(include_deprecated: bool) -> ir::Flat {
+    let bytes = fs::read(root().join(rbx_luau_props::VENDORED_DUMP))
+        .expect("vendored dump; run `rbx-luau-props fetch`");
+    let parsed = dump::parse(&bytes).expect("the vendored dump parses");
+    ir::flatten(
+        &parsed,
+        ir::Options {
+            include_deprecated,
+            target: ir::Target::Style,
+        },
+    )
+    .expect("the flat surface builds")
+}
+
+fn flat_names(flat: &ir::Flat) -> BTreeMap<&str, &ir::FlatProperty> {
+    flat.properties
+        .iter()
+        .map(|p| (p.name.as_str(), p))
+        .collect()
+}
+
+#[test]
+fn the_styling_target_reaches_path2d() {
+    // The whole reason it roots at GuiBase rather than GuiBase2d. Both are
+    // assignable, and the React target misses them.
+    let built = flat(false);
+    let names = flat_names(&built);
+    assert!(names.contains_key("Closed"), "Path2D.Closed is missing");
+    assert!(names.contains_key("Color3"), "Path2D.Color3 is missing");
+}
+
+#[test]
+fn the_styling_target_prunes_the_3d_adornments() {
+    // GuiBase also roots the handles and selection boxes. In a type closed
+    // with `[string]: nil` every name it carries is a typo that stops being
+    // caught, and no StyleRule paints a wireframe.
+    let built = flat(false);
+    let names = flat_names(&built);
+    for property in [
+        "WireRadius",
+        "Humanoid",
+        "Velocity",
+        "TargetSurface",
+        "AdornCullingMode",
+    ] {
+        assert!(
+            !names.contains_key(property),
+            "{property} comes from the 3D adornments and should be pruned"
+        );
+    }
+}
+
+#[test]
+fn a_name_meaning_two_things_keeps_both() {
+    // Transparency is a number on a GuiObject and a NumberSequence on a
+    // UIGradient. A flat type that kept only one would reject a legitimate
+    // rule, so the union carries every spelling the surface uses.
+    let built = flat(false);
+    let names = flat_names(&built);
+    let transparency = names["Transparency"];
+    assert!(transparency.luau.contains(&"number".to_owned()));
+    assert!(transparency.luau.contains(&"NumberSequence".to_owned()));
+    assert!(transparency.owners.len() > 1);
+}
+
+#[test]
+fn the_modifiers_are_the_creatable_ui_components() {
+    let flat = flat(false);
+    for modifier in ["UICorner", "UIStroke", "UIGradient", "UIPadding"] {
+        assert!(
+            flat.modifiers.iter().any(|m| m == modifier),
+            "{modifier} should be an instance modifier"
+        );
+    }
+    // Abstract, so it can never be created as a pseudo-instance.
+    assert!(!flat.modifiers.iter().any(|m| m == "UIComponent"));
+    assert!(!flat.modifiers.iter().any(|m| m == "UIBase"));
+}
+
+#[test]
+fn every_styled_value_admits_a_token_reference() {
+    let flat = flat(false);
+    let emitted = emit::emit_style(&flat, emit::Indent::default());
+
+    for property in &flat.properties {
+        let line = emitted
+            .source
+            .lines()
+            .find(|line| {
+                line.trim_start()
+                    .starts_with(&format!("{}: ", property.name))
+            })
+            .unwrap_or_else(|| panic!("{} is not emitted", property.name));
+
+        // Either it is widened with Token, or it is already a string and
+        // widening it would read as a mistake.
+        assert!(
+            line.contains("| Token)") || property.luau.iter().any(|luau| luau == "string"),
+            "{} is not open to a \"$Token\" reference: {line}",
+            property.name
+        );
+    }
+}
+
+#[test]
+fn the_styling_type_is_closed() {
+    // This is the point of the target: without it a misspelled property is
+    // accepted by the type checker, and the engine does not guard it either.
+    let emitted = emit::emit_style(&flat(false), emit::Indent::default());
+    assert!(emitted.source.contains("[string]: nil,"));
+    assert!(!emitted.source.contains("[any]: any,"));
+}
+
+#[test]
+fn the_styling_type_carries_the_rules_own_keys() {
+    // A closed type cannot be extended through an intersection: the member
+    // holding `[string]: nil` demands every string key be nil, including the
+    // ones its siblings declare. So these have to be emitted here -- and both
+    // are read from the dump rather than written down.
+    let built = flat(false);
+    let emitted = emit::emit_style(&built, emit::Indent::default());
+
+    // StyleRule.Priority is a real property, so it arrives widened like any
+    // other and with the type the engine gives it.
+    assert!(built.rule_properties.iter().any(|p| p.name == "Priority"));
+    assert!(emitted.source.contains("Priority: (number | Token)?,"));
+
+    // Selector is the one StyleRule property a declarative wrapper owns
+    // structurally: it is the table's key, so a field would compete with it.
+    assert!(!built.rule_properties.iter().any(|p| p.name == "Selector"));
+    assert!(!emitted.source.contains("Selector:"));
+
+    // Transitions are an engine capability, not a wrapper invention. The key is
+    // emitted because the dump still declares the methods behind it.
+    assert!(built.transitions);
+    assert!(emitted
+        .source
+        .contains("Transition: { [string]: TweenInfo }?,"));
+}
+
+#[test]
+fn the_rules_own_keys_never_collide_with_the_painted_surface() {
+    // StyleRule inherits Name and Archivable from Instance, and so does every
+    // UI class the surface already carries. Declaring a field twice does not
+    // compile, so the rule's properties are only added where the surface has
+    // no field of that name.
+    let built = flat(false);
+    let painted: BTreeMap<&str, &ir::FlatProperty> = flat_names(&built);
+
+    for property in &built.rule_properties {
+        assert!(
+            !painted.contains_key(property.name.as_str()),
+            "{} is declared twice",
+            property.name
+        );
+    }
+}
+
+#[test]
+fn parent_is_left_out_of_the_styling_target_too() {
+    let built = flat(false);
+    let names = flat_names(&built);
+    assert!(!names.contains_key("Parent"));
+}
+
+#[test]
+fn the_styling_target_needs_no_react() {
+    let emitted = emit::emit_style(&flat(false), emit::Indent::default());
+    assert!(!emitted.source.contains("React"));
+    assert!(!emitted.source.contains("Binding"));
+}
+
+#[test]
+fn generating_the_styling_target_twice_gives_the_same_bytes() {
+    let first = emit::emit_style(&flat(false), emit::Indent::default()).source;
+    let second = emit::emit_style(&flat(false), emit::Indent::default()).source;
+    assert_eq!(first, second);
 }

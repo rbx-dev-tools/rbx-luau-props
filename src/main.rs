@@ -2,10 +2,10 @@ use std::{env, path::PathBuf};
 
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use react_luau_props::{check, emit, fetch, find_root, generate, write, Config, OUTPUT, TYPES};
+use rbx_luau_props::{check, emit, fetch, find_root, generate, write, Config, OUTPUT, TYPES};
 
 #[derive(Debug, Parser)]
-#[command(name = "react-luau-props", version, about)]
+#[command(name = "rbx-luau-props", version, about)]
 struct Cli {
     /// Repository root. Defaults to the nearest directory holding Cargo.toml.
     #[arg(long, global = true)]
@@ -114,7 +114,7 @@ fn main() -> Result<()> {
             println!("generated files are current");
 
             if upstream {
-                match react_luau_props::behind_upstream(&root)? {
+                match rbx_luau_props::behind_upstream(&root)? {
                     None => println!("the vendored dump is the deployed Studio"),
                     Some((vendored, deployed)) => println!(
                         "Roblox is on {deployed}, the vendored dump is {vendored};                          run `fetch` then `generate` to see whether the types move"
@@ -125,7 +125,7 @@ fn main() -> Result<()> {
         Command::Fetch => {
             let (version, upload) = fetch(&root)?;
             println!("vendored the API dump for Roblox {version} ({upload})");
-            println!("run `react-luau-props generate` next, then review the diff");
+            println!("run `rbx-luau-props generate` next, then review the diff");
         }
     }
 

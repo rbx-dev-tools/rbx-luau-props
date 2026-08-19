@@ -22,6 +22,7 @@ use std::{
 
 pub const OUTPUT: &str = "generated";
 pub const TYPES: &str = "UiProps.luau";
+pub const STYLE_TYPES: &str = "StyleRuleProps.luau";
 pub const MANIFEST: &str = "manifest.json";
 pub const VENDORED_DUMP: &str = "vendor/API-Dump.json";
 
@@ -38,10 +39,19 @@ pub struct Manifest {
     pub classes: usize,
     pub properties: usize,
     pub skipped_deprecated: usize,
+    /// The styling target, added after the React one. Defaulted on read so a
+    /// manifest written before it existed still parses.
+    #[serde(default)]
+    pub style_sha256: String,
+    #[serde(default)]
+    pub style_properties: usize,
+    #[serde(default)]
+    pub style_modifiers: usize,
 }
 
 pub struct Artifacts {
     pub types: String,
+    pub style_types: String,
     pub manifest: Manifest,
 }
 
@@ -68,20 +78,34 @@ pub fn generate(root: &Path, config: &Config) -> Result<Artifacts> {
     let dump_path = root.join(VENDORED_DUMP);
     let bytes = fs::read(&dump_path).with_context(|| {
         format!(
-            "reading {}; run `react-luau-props fetch` first",
+            "reading {}; run `rbx-luau-props fetch` first",
             dump_path.display()
         )
     })?;
 
     let previous = read_manifest(root).ok();
     let parsed = dump::parse(&bytes)?;
+
     let surface = ir::build(
         &parsed,
         ir::Options {
             include_deprecated: config.include_deprecated,
+            target: ir::Target::React,
         },
     )?;
     let emitted = emit::emit(&surface, &config.style);
+
+    // Both targets are always emitted. A flag would only create the state
+    // where one file is refreshed and the other silently is not, which is
+    // exactly what `check` exists to make impossible.
+    let flat = ir::flatten(
+        &parsed,
+        ir::Options {
+            include_deprecated: config.include_deprecated,
+            target: ir::Target::Style,
+        },
+    )?;
+    let style = emit::emit_style(&flat, config.style.indent);
 
     // The version is not in the dump itself, so it is carried by the manifest
     // written when the dump was fetched.
@@ -99,8 +123,12 @@ pub fn generate(root: &Path, config: &Config) -> Result<Artifacts> {
             classes: emitted.classes,
             properties: emitted.properties,
             skipped_deprecated: surface.skipped_deprecated,
+            style_sha256: digest(style.source.as_bytes()),
+            style_properties: style.properties,
+            style_modifiers: flat.modifiers.len(),
         },
         types: emitted.source,
+        style_types: style.source,
     })
 }
 
@@ -109,6 +137,7 @@ pub fn write(root: &Path, artifacts: &Artifacts) -> Result<()> {
     fs::create_dir_all(&out).with_context(|| format!("creating {}", out.display()))?;
 
     fs::write(out.join(TYPES), &artifacts.types)?;
+    fs::write(out.join(STYLE_TYPES), &artifacts.style_types)?;
     fs::write(
         out.join(MANIFEST),
         serde_json::to_string_pretty(&artifacts.manifest)? + "\n",
@@ -133,11 +162,18 @@ pub fn check(root: &Path, config: &Config) -> Result<()> {
         fs::read_to_string(root.join(OUTPUT).join(TYPES)).context("reading the committed types")?;
 
     if committed_types != fresh.types {
-        bail!("{OUTPUT}/{TYPES} is out of date; run `react-luau-props generate`");
+        bail!("{OUTPUT}/{TYPES} is out of date; run `rbx-luau-props generate`");
+    }
+
+    let committed_style = fs::read_to_string(root.join(OUTPUT).join(STYLE_TYPES))
+        .context("reading the committed styling types")?;
+    if committed_style != fresh.style_types {
+        bail!("{OUTPUT}/{STYLE_TYPES} is out of date; run `rbx-luau-props generate`");
     }
 
     let committed_manifest = read_manifest(root)?;
     if committed_manifest.types_sha256 != fresh.manifest.types_sha256
+        || committed_manifest.style_sha256 != fresh.manifest.style_sha256
         || committed_manifest.dump_sha256 != fresh.manifest.dump_sha256
     {
         bail!("{OUTPUT}/{MANIFEST} does not describe the committed files");
@@ -193,6 +229,9 @@ pub fn fetch(root: &Path) -> Result<(String, String)> {
         classes: 0,
         properties: 0,
         skipped_deprecated: 0,
+        style_sha256: String::new(),
+        style_properties: 0,
+        style_modifiers: 0,
     };
     fs::write(
         out.join(MANIFEST),
