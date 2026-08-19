@@ -45,7 +45,7 @@ pub enum Target {
     /// The flat shape is forced rather than chosen. `[string]: nil` inside an
     /// intersection makes the member carrying it demand that every string key
     /// be `nil`, including the ones its siblings declare, so even a valid
-    /// property is rejected. Measured in sculpt-bench, `01_indexer_forms`.
+    /// property is rejected -- checked against `luau-lsp analyze`, not assumed.
     Style,
 }
 

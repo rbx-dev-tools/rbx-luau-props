@@ -113,9 +113,9 @@ pub enum Capabilities {
 /// `Capabilities` describes Roblox's *sandboxing* system, not assignability: it
 /// names the capability a script must hold, and a script running outside a
 /// sandboxed container holds every ordinary one. Treating a non-empty list as a
-/// gate was too strict, and `StyleRule.Priority` is the proof -- it carries
-/// `Write: ["UI"]`, Sculpt assigns it, and the `06_States` story in
-/// stylesheet-lab depends on it working.
+/// gate was too strict, and `StyleRule.Priority` is the counter-example that
+/// proves it: the dump gives it `Write: ["UI"]`, yet ordinary game code assigns
+/// it and the rule honours the new priority.
 ///
 /// `CapabilityControl` is the exception, because it governs the sandbox itself:
 /// `Instance.Capabilities` and `Instance.Sandboxed` are the two properties that
