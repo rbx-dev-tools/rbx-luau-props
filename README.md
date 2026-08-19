@@ -259,3 +259,8 @@ For a one-off, an intersection works too, markers included:
 ```lua
 type CardProps = UiProps.Frame & { title: string, onClose: () -> () }
 ```
+
+## Trademark
+
+Luau is a trademark of Roblox Corporation. This is an independent project, not
+affiliated with or endorsed by Roblox or the Luau team.
