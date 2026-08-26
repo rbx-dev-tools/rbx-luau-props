@@ -302,10 +302,19 @@ fn write_modifier_type(
     }
 }
 
-/// One runtime lookup table, annotated so an arbitrary key may be tested
-/// against it.
+/// One runtime lookup table.
+///
+/// Deliberately NOT annotated `{ [string]: true }`. That was the first shape,
+/// on the assumption that an indexer is what lets a builder test a key it
+/// computed at runtime. Measured with `luau-lsp analyze`, it is not: iterating
+/// the table, indexing it with `string.sub(key, 3)`, and indexing it with any
+/// other computed string all type-check on the inferred type exactly as they do
+/// on the annotated one. What the annotation does do is erase the key names,
+/// which costs the two things worth having -- completion on `Modifiers.` and a
+/// misspelling being an error rather than a silent `nil`. In a file that exists
+/// to make a misspelled name an error, that is the wrong trade.
 fn write_lookup(out: &mut String, tab: &str, name: &str, keys: impl Iterator<Item = String>) {
-    let _ = writeln!(out, "local {name}: {{ [string]: true }} = {{");
+    let _ = writeln!(out, "local {name} = {{");
     for key in keys {
         let _ = writeln!(out, "{tab}{key} = true,");
     }

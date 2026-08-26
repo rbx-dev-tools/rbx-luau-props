@@ -1092,13 +1092,13 @@ export type UITextSizeConstraintTransition = {
 }
 
 -- Which keys configure the rule rather than naming a property it paints.
-local RuleKeys: { [string]: true } = {
+local RuleKeys = {
 	Priority = true,
 	Transition = true,
 }
 
 -- The "::" names the engine can create, without the prefix.
-local Modifiers: { [string]: true } = {
+local Modifiers = {
 	UIAspectRatioConstraint = true,
 	UICorner = true,
 	UIDragDetector = true,

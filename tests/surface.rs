@@ -387,15 +387,11 @@ fn the_runtime_lists_are_the_same_lists() {
     let flat = flat(false);
     let emitted = emit::emit_style(&flat, emit::Indent::default());
 
-    assert!(emitted
-        .source
-        .contains("local RuleKeys: { [string]: true } = {"));
+    assert!(emitted.source.contains("local RuleKeys = {"));
     assert!(emitted.source.contains("\tPriority = true,"));
     assert!(emitted.source.contains("\tTransition = true,"));
 
-    assert!(emitted
-        .source
-        .contains("local Modifiers: { [string]: true } = {"));
+    assert!(emitted.source.contains("local Modifiers = {"));
     for modifier in modifier_classes(&flat) {
         assert!(
             emitted.source.contains(&format!("\t{modifier} = true,")),
@@ -408,6 +404,21 @@ fn the_runtime_lists_are_the_same_lists() {
     assert!(emitted
         .source
         .ends_with("return {\n\tRuleKeys = RuleKeys,\n\tModifiers = Modifiers,\n}\n"));
+}
+
+#[test]
+fn the_runtime_lists_keep_their_key_names_in_the_type() {
+    // Not annotated `{ [string]: true }`, which was the first shape. The
+    // annotation was there on the assumption that an indexer is what lets a
+    // builder test a key it computed at runtime; measured with luau-lsp, every
+    // access a builder makes -- iterating the table, indexing it with
+    // `string.sub(key, 3)`, indexing it with any other computed string -- checks
+    // the same either way. What the annotation really does is erase the key
+    // names, so `Modifiers.` stops completing and `Modifiers.UICornre` stops
+    // being an error. In this file, of all files, that is the wrong trade.
+    let emitted = emit::emit_style(&flat(false), emit::Indent::default());
+    assert!(!emitted.source.contains("local RuleKeys: "));
+    assert!(!emitted.source.contains("local Modifiers: "));
 }
 
 #[test]
