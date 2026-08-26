@@ -133,6 +133,22 @@ pub struct FlatProperty {
     pub hidden: bool,
 }
 
+/// One instance modifier a rule may nest, written `["::UICorner"]`.
+///
+/// This is the one place in this target where the painted class IS statically
+/// known: a `::` selector names exactly one class, unlike a rule selector,
+/// which names none. So a modifier gets a closed type of its own rather than
+/// the flat union the rule level is stuck with, and a property that exists but
+/// not on that class is an error inside it.
+#[derive(Debug, Clone)]
+pub struct Modifier {
+    pub class: String,
+    /// The class's own assignable properties, inherited ones included,
+    /// alphabetical. One Luau spelling each: a single class cannot disagree
+    /// with itself the way the flattened surface does.
+    pub properties: Vec<FlatProperty>,
+}
+
 /// The whole surface as a single type, for a target that cannot use one type
 /// per class because the selector it is written against is a string.
 #[derive(Debug, Clone)]
@@ -140,7 +156,7 @@ pub struct Flat {
     pub properties: Vec<FlatProperty>,
     /// The instance modifiers a rule may nest, written `::UICorner` and so on.
     /// Derived: every creatable `UIBase` descendant.
-    pub modifiers: Vec<String>,
+    pub modifiers: Vec<Modifier>,
     /// `StyleRule`'s own assignable properties, which belong in a rule table
     /// alongside the properties of whatever the rule paints. `Priority` is the
     /// one that matters; it is read from the dump rather than written down.
@@ -356,16 +372,41 @@ pub fn flatten(dump: &Dump, options: Options) -> Result<Flat> {
     // The pseudo-instances a rule may nest are exactly the UI components a
     // sheet can create: creatable UIBase descendants. Derived like everything
     // else, so a new one Roblox ships arrives with the next dump refresh.
-    let mut modifiers: Vec<String> = dump
+    let mut modifier_classes: Vec<&str> = dump
         .classes
         .iter()
         .filter(|class| {
             index.descends_from_any(&class.name, &["UIBase"])
                 && !class.tags.contains("NotCreatable")
         })
-        .map(|class| class.name.clone())
+        .map(|class| class.name.as_str())
         .collect();
-    modifiers.sort();
+    modifier_classes.sort_unstable();
+
+    let mut modifiers = Vec::with_capacity(modifier_classes.len());
+    for class in modifier_classes {
+        // Counted against the surface already: every one of these classes
+        // descends from UIBase, so `build` walked it and its deprecated
+        // properties are in that total. Adding them again would double the
+        // number the manifest reports.
+        let mut counted_by_the_surface = 0;
+        let mut properties: Vec<FlatProperty> = index
+            .properties_of(class, options, &mut counted_by_the_surface)?
+            .into_iter()
+            .map(|property| FlatProperty {
+                name: property.name,
+                luau: vec![property.luau],
+                owners: vec![property.owner],
+                hidden: property.hidden,
+            })
+            .collect();
+        properties.sort_by(|a, b| a.name.cmp(&b.name));
+
+        modifiers.push(Modifier {
+            class: class.to_owned(),
+            properties,
+        });
+    }
 
     // The rule being built is itself an instance with properties. They are read
     // from the dump like everything else, minus the ones a declarative wrapper

@@ -11,6 +11,11 @@
     TextSize on a rule that only ever matches a Frame, and that imprecision
     is the price of catching the misspellings.
 
+    An instance modifier is the exception. `["::UICorner"]` names exactly
+    ONE class, so each one gets a closed type of its own and a property
+    that is real but not on that class is an error inside it. The apology
+    above applies to the rule level only.
+
     Every value is widened with `string`, because a styled property may
     hold a "$Token" reference instead. The engine resolves those against
     the sheet's attributes; no library interpolates them.
@@ -22,18 +27,26 @@
     below this type catches a typo -- not the call, not the paint, and not
     a git diff, since a rule's properties live in a hidden BinaryString.
 
+    A Transition key is closed the same way, and for the same reason:
+    SetPropertyTransitions takes property NAMES too, so a misspelling
+    there is the same silent no-op. Every property is offered one, because
+    the dump does not say which values the engine can interpolate; a
+    TweenInfo on one it cannot is ignored rather than refused.
+
     `[string]: nil` cannot be added by a consumer afterwards: inside an
     intersection the member carrying it demands that every string key be
     nil, including the ones its siblings declare, so even a valid property
     is rejected. That is why the rule's own properties and the Transition
     key are declared here rather than left for a wrapper to intersect on.
+
+    The two tables this module RETURNS are the same lists at runtime. A
+    builder has to know which keys configure the rule rather than name a
+    property, and which "::" names the engine can create; a hand-written
+    copy beside a generated list is exactly the drift this file removes.
 ]]
 
 -- A "$Name" reference to a token held as an attribute on the StyleSheet.
 export type Token = string
-
--- A nested instance modifier, built as a child StyleRule.
-export type Modifier = { [string]: any }
 
 export type StyleRuleProps = {
 	ActivatedCursorIcon: string?,
@@ -271,22 +284,24 @@ export type StyleRuleProps = {
 	ZIndexBehavior: (Enum.ZIndexBehavior | Token)?,
 	ZOffset: (number | Token)?,
 
-	-- instance modifiers: every creatable UIBase descendant
-	["::UIAspectRatioConstraint"]: Modifier?,
-	["::UICorner"]: Modifier?,
-	["::UIDragDetector"]: Modifier?,
-	["::UIFlexItem"]: Modifier?,
-	["::UIGradient"]: Modifier?,
-	["::UIGridLayout"]: Modifier?,
-	["::UIListLayout"]: Modifier?,
-	["::UIPadding"]: Modifier?,
-	["::UIPageLayout"]: Modifier?,
-	["::UIScale"]: Modifier?,
-	["::UIShadow"]: Modifier?,
-	["::UISizeConstraint"]: Modifier?,
-	["::UIStroke"]: Modifier?,
-	["::UITableLayout"]: Modifier?,
-	["::UITextSizeConstraint"]: Modifier?,
+	-- instance modifiers: every creatable UIBase descendant. Each one is
+	-- built as a child StyleRule whose selector is the key, and its type is
+	-- the only precise one in this file.
+	["::UIAspectRatioConstraint"]: UIAspectRatioConstraint?,
+	["::UICorner"]: UICorner?,
+	["::UIDragDetector"]: UIDragDetector?,
+	["::UIFlexItem"]: UIFlexItem?,
+	["::UIGradient"]: UIGradient?,
+	["::UIGridLayout"]: UIGridLayout?,
+	["::UIListLayout"]: UIListLayout?,
+	["::UIPadding"]: UIPadding?,
+	["::UIPageLayout"]: UIPageLayout?,
+	["::UIScale"]: UIScale?,
+	["::UIShadow"]: UIShadow?,
+	["::UISizeConstraint"]: UISizeConstraint?,
+	["::UIStroke"]: UIStroke?,
+	["::UITableLayout"]: UITableLayout?,
+	["::UITextSizeConstraint"]: UITextSizeConstraint?,
 
 	-- the rule's own properties. NOT widened with Token: a "$Name"
 	-- reference is resolved by the engine for a STYLED property, the kind
@@ -296,9 +311,812 @@ export type StyleRuleProps = {
 
 	-- the declarative spelling of SetPropertyTransitions and
 	-- SetDefaultPropertyTransition, which the dump still declares
-	Transition: { [string]: TweenInfo }?,
+	Transition: StyleRuleTransition?,
 
 	[string]: nil,
 }
 
-return nil
+export type StyleRuleTransition = {
+	ActivatedCursorIcon: TweenInfo?,
+	ActivatedCursorIconContent: TweenInfo?,
+	Active: TweenInfo?,
+	AdShape: TweenInfo?,
+	Adornee: TweenInfo?,
+	AlwaysOnTop: TweenInfo?,
+	Ambient: TweenInfo?,
+	AnchorPoint: TweenInfo?,
+	Animated: TweenInfo?,
+	ApplyStrokeMode: TweenInfo?,
+	Archivable: TweenInfo?,
+	AspectRatio: TweenInfo?,
+	AspectType: TweenInfo?,
+	AutoButtonColor: TweenInfo?,
+	AutoLocalize: TweenInfo?,
+	AutomaticCanvasSize: TweenInfo?,
+	AutomaticSize: TweenInfo?,
+	BackgroundColor3: TweenInfo?,
+	BackgroundTransparency: TweenInfo?,
+	BlurRadius: TweenInfo?,
+	BorderColor3: TweenInfo?,
+	BorderMode: TweenInfo?,
+	BorderOffset: TweenInfo?,
+	BorderSizePixel: TweenInfo?,
+	BorderStrokePosition: TweenInfo?,
+	BottomImage: TweenInfo?,
+	BottomImageContent: TweenInfo?,
+	BottomLeftRadius: TweenInfo?,
+	BottomRightRadius: TweenInfo?,
+	BoundingBehavior: TweenInfo?,
+	BoundingUI: TweenInfo?,
+	Brightness: TweenInfo?,
+	CanvasPosition: TweenInfo?,
+	CanvasSize: TweenInfo?,
+	CellPadding: TweenInfo?,
+	CellSize: TweenInfo?,
+	Circular: TweenInfo?,
+	ClearTextOnFocus: TweenInfo?,
+	ClipToDeviceSafeArea: TweenInfo?,
+	ClipsDescendants: TweenInfo?,
+	Closed: TweenInfo?,
+	Color: TweenInfo?,
+	Color3: TweenInfo?,
+	CornerRadius: TweenInfo?,
+	CurrentCamera: TweenInfo?,
+	CursorIcon: TweenInfo?,
+	CursorIconContent: TweenInfo?,
+	CursorPosition: TweenInfo?,
+	DisplayOrder: TweenInfo?,
+	DistanceStep: TweenInfo?,
+	DominantAxis: TweenInfo?,
+	DragAxis: TweenInfo?,
+	DragRelativity: TweenInfo?,
+	DragRotation: TweenInfo?,
+	DragSpace: TweenInfo?,
+	DragStyle: TweenInfo?,
+	DragUDim2: TweenInfo?,
+	EasingDirection: TweenInfo?,
+	EasingStyle: TweenInfo?,
+	ElasticBehavior: TweenInfo?,
+	EnableVideoAds: TweenInfo?,
+	Enabled: TweenInfo?,
+	ExtentsOffset: TweenInfo?,
+	ExtentsOffsetWorldSpace: TweenInfo?,
+	Face: TweenInfo?,
+	FallbackImage: TweenInfo?,
+	FallbackImageContent: TweenInfo?,
+	FillDirection: TweenInfo?,
+	FillDirectionMaxCells: TweenInfo?,
+	FillEmptySpaceColumns: TweenInfo?,
+	FillEmptySpaceRows: TweenInfo?,
+	FlexMode: TweenInfo?,
+	Font: TweenInfo?,
+	FontFace: TweenInfo?,
+	GamepadInputEnabled: TweenInfo?,
+	GroupColor3: TweenInfo?,
+	GroupTransparency: TweenInfo?,
+	GrowRatio: TweenInfo?,
+	HorizontalAlignment: TweenInfo?,
+	HorizontalFlex: TweenInfo?,
+	HorizontalScrollBarInset: TweenInfo?,
+	HoverHapticEffect: TweenInfo?,
+	HoverImage: TweenInfo?,
+	HoverImageContent: TweenInfo?,
+	IgnoreGuiInset: TweenInfo?,
+	Image: TweenInfo?,
+	ImageColor3: TweenInfo?,
+	ImageContent: TweenInfo?,
+	ImageRectOffset: TweenInfo?,
+	ImageRectSize: TweenInfo?,
+	ImageTransparency: TweenInfo?,
+	InputAction: TweenInfo?,
+	InputSink: TweenInfo?,
+	Inset: TweenInfo?,
+	Interactable: TweenInfo?,
+	InternalVideoUsage: TweenInfo?,
+	ItemLineAlignment: TweenInfo?,
+	LayoutOrder: TweenInfo?,
+	LightColor: TweenInfo?,
+	LightDirection: TweenInfo?,
+	LightInfluence: TweenInfo?,
+	LineHeight: TweenInfo?,
+	LineJoinMode: TweenInfo?,
+	Looped: TweenInfo?,
+	MajorAxis: TweenInfo?,
+	MaxDistance: TweenInfo?,
+	MaxDragAngle: TweenInfo?,
+	MaxDragTranslation: TweenInfo?,
+	MaxSize: TweenInfo?,
+	MaxTextSize: TweenInfo?,
+	MaxVisibleGraphemes: TweenInfo?,
+	MaximumResolution: TweenInfo?,
+	MidImage: TweenInfo?,
+	MidImageContent: TweenInfo?,
+	MinDragAngle: TweenInfo?,
+	MinDragTranslation: TweenInfo?,
+	MinSize: TweenInfo?,
+	MinTextSize: TweenInfo?,
+	Modal: TweenInfo?,
+	Mode: TweenInfo?,
+	MultiLine: TweenInfo?,
+	Name: TweenInfo?,
+	NextSelectionDown: TweenInfo?,
+	NextSelectionLeft: TweenInfo?,
+	NextSelectionRight: TweenInfo?,
+	NextSelectionUp: TweenInfo?,
+	Offset: TweenInfo?,
+	OpenTypeFeatures: TweenInfo?,
+	Padding: TweenInfo?,
+	PaddingBottom: TweenInfo?,
+	PaddingLeft: TweenInfo?,
+	PaddingRight: TweenInfo?,
+	PaddingTop: TweenInfo?,
+	PixelsPerStud: TweenInfo?,
+	PlaceholderColor3: TweenInfo?,
+	PlaceholderText: TweenInfo?,
+	PlayerToHideFrom: TweenInfo?,
+	Playing: TweenInfo?,
+	Position: TweenInfo?,
+	PressHapticEffect: TweenInfo?,
+	PressedImage: TweenInfo?,
+	PressedImageContent: TweenInfo?,
+	ReferenceUIInstance: TweenInfo?,
+	ResampleMode: TweenInfo?,
+	ResetOnSpawn: TweenInfo?,
+	ResponseStyle: TweenInfo?,
+	RichText: TweenInfo?,
+	RollOffMaxDistance: TweenInfo?,
+	RollOffMinDistance: TweenInfo?,
+	RollOffMode: TweenInfo?,
+	RootLocalizationTable: TweenInfo?,
+	Rotation: TweenInfo?,
+	SafeAreaCompatibility: TweenInfo?,
+	Scale: TweenInfo?,
+	ScaleType: TweenInfo?,
+	ScreenInsets: TweenInfo?,
+	ScrollBarImageColor3: TweenInfo?,
+	ScrollBarImageTransparency: TweenInfo?,
+	ScrollBarThickness: TweenInfo?,
+	ScrollWheelInputEnabled: TweenInfo?,
+	ScrollingDirection: TweenInfo?,
+	ScrollingEnabled: TweenInfo?,
+	Selectable: TweenInfo?,
+	Selected: TweenInfo?,
+	SelectionBehaviorDown: TweenInfo?,
+	SelectionBehaviorLeft: TweenInfo?,
+	SelectionBehaviorRight: TweenInfo?,
+	SelectionBehaviorUp: TweenInfo?,
+	SelectionGroup: TweenInfo?,
+	SelectionImageObject: TweenInfo?,
+	SelectionModeDragSpeed: TweenInfo?,
+	SelectionModeRotateSpeed: TweenInfo?,
+	SelectionOrder: TweenInfo?,
+	SelectionStart: TweenInfo?,
+	ShowBehindParent: TweenInfo?,
+	ShowNativeInput: TweenInfo?,
+	ShrinkRatio: TweenInfo?,
+	Size: TweenInfo?,
+	SizeConstraint: TweenInfo?,
+	SizeOffset: TweenInfo?,
+	SizingMode: TweenInfo?,
+	SliceCenter: TweenInfo?,
+	SliceScale: TweenInfo?,
+	SortOrder: TweenInfo?,
+	Spread: TweenInfo?,
+	StartCorner: TweenInfo?,
+	StrokeSizingMode: TweenInfo?,
+	StudsOffset: TweenInfo?,
+	StudsOffsetWorldSpace: TweenInfo?,
+	Style: TweenInfo?,
+	Target: TweenInfo?,
+	Text: TweenInfo?,
+	TextColor3: TweenInfo?,
+	TextDirection: TweenInfo?,
+	TextEditable: TweenInfo?,
+	TextScaled: TweenInfo?,
+	TextSize: TweenInfo?,
+	TextStrokeColor3: TweenInfo?,
+	TextStrokeTransparency: TweenInfo?,
+	TextTransparency: TweenInfo?,
+	TextTruncate: TweenInfo?,
+	TextWrapped: TweenInfo?,
+	TextXAlignment: TweenInfo?,
+	TextYAlignment: TweenInfo?,
+	Thickness: TweenInfo?,
+	TileMode: TweenInfo?,
+	TileSize: TweenInfo?,
+	TimePosition: TweenInfo?,
+	ToolPunchThroughDistance: TweenInfo?,
+	TopImage: TweenInfo?,
+	TopImageContent: TweenInfo?,
+	TopLeftRadius: TweenInfo?,
+	TopRightRadius: TweenInfo?,
+	TouchInputEnabled: TweenInfo?,
+	Transparency: TweenInfo?,
+	TweenTime: TweenInfo?,
+	Type: TweenInfo?,
+	UIDragSpeedAxisMapping: TweenInfo?,
+	VerticalAlignment: TweenInfo?,
+	VerticalFlex: TweenInfo?,
+	VerticalScrollBarInset: TweenInfo?,
+	VerticalScrollBarPosition: TweenInfo?,
+	Video: TweenInfo?,
+	VideoColor3: TweenInfo?,
+	VideoContent: TweenInfo?,
+	VideoRectOffset: TweenInfo?,
+	VideoRectSize: TweenInfo?,
+	VideoTransparency: TweenInfo?,
+	Visible: TweenInfo?,
+	Volume: TweenInfo?,
+	Wraps: TweenInfo?,
+	ZIndex: TweenInfo?,
+	ZIndexBehavior: TweenInfo?,
+	ZOffset: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIAspectRatioConstraint = {
+	Archivable: (boolean | Token)?,
+	AspectRatio: (number | Token)?,
+	AspectType: (Enum.AspectType | Token)?,
+	DominantAxis: (Enum.DominantAxis | Token)?,
+	Name: string?,
+
+	Priority: number?,
+
+	Transition: UIAspectRatioConstraintTransition?,
+
+	[string]: nil,
+}
+
+export type UIAspectRatioConstraintTransition = {
+	Archivable: TweenInfo?,
+	AspectRatio: TweenInfo?,
+	AspectType: TweenInfo?,
+	DominantAxis: TweenInfo?,
+	Name: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UICorner = {
+	Archivable: (boolean | Token)?,
+	BottomLeftRadius: (UDim | Token)?,
+	BottomRightRadius: (UDim | Token)?,
+	CornerRadius: (UDim | Token)?,
+	Name: string?,
+	TopLeftRadius: (UDim | Token)?,
+	TopRightRadius: (UDim | Token)?,
+
+	Priority: number?,
+
+	Transition: UICornerTransition?,
+
+	[string]: nil,
+}
+
+export type UICornerTransition = {
+	Archivable: TweenInfo?,
+	BottomLeftRadius: TweenInfo?,
+	BottomRightRadius: TweenInfo?,
+	CornerRadius: TweenInfo?,
+	Name: TweenInfo?,
+	TopLeftRadius: TweenInfo?,
+	TopRightRadius: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIDragDetector = {
+	ActivatedCursorIcon: string?,
+	ActivatedCursorIconContent: (Content | Token)?,
+	Archivable: (boolean | Token)?,
+	BoundingBehavior: (Enum.UIDragDetectorBoundingBehavior | Token)?,
+	BoundingUI: (GuiBase2d | Token)?,
+	CursorIcon: string?,
+	CursorIconContent: (Content | Token)?,
+	DragAxis: (Vector2 | Token)?,
+	DragRelativity: (Enum.UIDragDetectorDragRelativity | Token)?,
+	DragRotation: (number | Token)?,
+	DragSpace: (Enum.UIDragDetectorDragSpace | Token)?,
+	DragStyle: (Enum.UIDragDetectorDragStyle | Token)?,
+	DragUDim2: (UDim2 | Token)?,
+	Enabled: (boolean | Token)?,
+	MaxDragAngle: (number | Token)?,
+	MaxDragTranslation: (UDim2 | Token)?,
+	MinDragAngle: (number | Token)?,
+	MinDragTranslation: (UDim2 | Token)?,
+	Name: string?,
+	ReferenceUIInstance: (GuiObject | Token)?,
+	ResponseStyle: (Enum.UIDragDetectorResponseStyle | Token)?,
+	SelectionModeDragSpeed: (UDim2 | Token)?,
+	SelectionModeRotateSpeed: (number | Token)?,
+	UIDragSpeedAxisMapping: (Enum.UIDragSpeedAxisMapping | Token)?,
+
+	Priority: number?,
+
+	Transition: UIDragDetectorTransition?,
+
+	[string]: nil,
+}
+
+export type UIDragDetectorTransition = {
+	ActivatedCursorIcon: TweenInfo?,
+	ActivatedCursorIconContent: TweenInfo?,
+	Archivable: TweenInfo?,
+	BoundingBehavior: TweenInfo?,
+	BoundingUI: TweenInfo?,
+	CursorIcon: TweenInfo?,
+	CursorIconContent: TweenInfo?,
+	DragAxis: TweenInfo?,
+	DragRelativity: TweenInfo?,
+	DragRotation: TweenInfo?,
+	DragSpace: TweenInfo?,
+	DragStyle: TweenInfo?,
+	DragUDim2: TweenInfo?,
+	Enabled: TweenInfo?,
+	MaxDragAngle: TweenInfo?,
+	MaxDragTranslation: TweenInfo?,
+	MinDragAngle: TweenInfo?,
+	MinDragTranslation: TweenInfo?,
+	Name: TweenInfo?,
+	ReferenceUIInstance: TweenInfo?,
+	ResponseStyle: TweenInfo?,
+	SelectionModeDragSpeed: TweenInfo?,
+	SelectionModeRotateSpeed: TweenInfo?,
+	UIDragSpeedAxisMapping: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIFlexItem = {
+	Archivable: (boolean | Token)?,
+	FlexMode: (Enum.UIFlexMode | Token)?,
+	GrowRatio: (number | Token)?,
+	ItemLineAlignment: (Enum.ItemLineAlignment | Token)?,
+	Name: string?,
+	ShrinkRatio: (number | Token)?,
+
+	Priority: number?,
+
+	Transition: UIFlexItemTransition?,
+
+	[string]: nil,
+}
+
+export type UIFlexItemTransition = {
+	Archivable: TweenInfo?,
+	FlexMode: TweenInfo?,
+	GrowRatio: TweenInfo?,
+	ItemLineAlignment: TweenInfo?,
+	Name: TweenInfo?,
+	ShrinkRatio: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIGradient = {
+	Archivable: (boolean | Token)?,
+	Color: (ColorSequence | Token)?,
+	Enabled: (boolean | Token)?,
+	Name: string?,
+	Offset: (Vector2 | Token)?,
+	Rotation: (number | Token)?,
+	Scale: (number | Token)?,
+	TileMode: (Enum.GradientTileMode | Token)?,
+	Transparency: (NumberSequence | Token)?,
+	Type: (Enum.GradientType | Token)?,
+
+	Priority: number?,
+
+	Transition: UIGradientTransition?,
+
+	[string]: nil,
+}
+
+export type UIGradientTransition = {
+	Archivable: TweenInfo?,
+	Color: TweenInfo?,
+	Enabled: TweenInfo?,
+	Name: TweenInfo?,
+	Offset: TweenInfo?,
+	Rotation: TweenInfo?,
+	Scale: TweenInfo?,
+	TileMode: TweenInfo?,
+	Transparency: TweenInfo?,
+	Type: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIGridLayout = {
+	Archivable: (boolean | Token)?,
+	CellPadding: (UDim2 | Token)?,
+	CellSize: (UDim2 | Token)?,
+	FillDirection: (Enum.FillDirection | Token)?,
+	FillDirectionMaxCells: (number | Token)?,
+	HorizontalAlignment: (Enum.HorizontalAlignment | Token)?,
+	Name: string?,
+	SortOrder: (Enum.SortOrder | Token)?,
+	StartCorner: (Enum.StartCorner | Token)?,
+	VerticalAlignment: (Enum.VerticalAlignment | Token)?,
+
+	Priority: number?,
+
+	Transition: UIGridLayoutTransition?,
+
+	[string]: nil,
+}
+
+export type UIGridLayoutTransition = {
+	Archivable: TweenInfo?,
+	CellPadding: TweenInfo?,
+	CellSize: TweenInfo?,
+	FillDirection: TweenInfo?,
+	FillDirectionMaxCells: TweenInfo?,
+	HorizontalAlignment: TweenInfo?,
+	Name: TweenInfo?,
+	SortOrder: TweenInfo?,
+	StartCorner: TweenInfo?,
+	VerticalAlignment: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIListLayout = {
+	Archivable: (boolean | Token)?,
+	FillDirection: (Enum.FillDirection | Token)?,
+	HorizontalAlignment: (Enum.HorizontalAlignment | Token)?,
+	HorizontalFlex: (Enum.UIFlexAlignment | Token)?,
+	ItemLineAlignment: (Enum.ItemLineAlignment | Token)?,
+	Name: string?,
+	Padding: (UDim | Token)?,
+	SortOrder: (Enum.SortOrder | Token)?,
+	VerticalAlignment: (Enum.VerticalAlignment | Token)?,
+	VerticalFlex: (Enum.UIFlexAlignment | Token)?,
+	Wraps: (boolean | Token)?,
+
+	Priority: number?,
+
+	Transition: UIListLayoutTransition?,
+
+	[string]: nil,
+}
+
+export type UIListLayoutTransition = {
+	Archivable: TweenInfo?,
+	FillDirection: TweenInfo?,
+	HorizontalAlignment: TweenInfo?,
+	HorizontalFlex: TweenInfo?,
+	ItemLineAlignment: TweenInfo?,
+	Name: TweenInfo?,
+	Padding: TweenInfo?,
+	SortOrder: TweenInfo?,
+	VerticalAlignment: TweenInfo?,
+	VerticalFlex: TweenInfo?,
+	Wraps: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIPadding = {
+	Archivable: (boolean | Token)?,
+	Name: string?,
+	PaddingBottom: (UDim | Token)?,
+	PaddingLeft: (UDim | Token)?,
+	PaddingRight: (UDim | Token)?,
+	PaddingTop: (UDim | Token)?,
+
+	Priority: number?,
+
+	Transition: UIPaddingTransition?,
+
+	[string]: nil,
+}
+
+export type UIPaddingTransition = {
+	Archivable: TweenInfo?,
+	Name: TweenInfo?,
+	PaddingBottom: TweenInfo?,
+	PaddingLeft: TweenInfo?,
+	PaddingRight: TweenInfo?,
+	PaddingTop: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIPageLayout = {
+	Animated: (boolean | Token)?,
+	Archivable: (boolean | Token)?,
+	Circular: (boolean | Token)?,
+	EasingDirection: (Enum.EasingDirection | Token)?,
+	EasingStyle: (Enum.EasingStyle | Token)?,
+	FillDirection: (Enum.FillDirection | Token)?,
+	GamepadInputEnabled: (boolean | Token)?,
+	HorizontalAlignment: (Enum.HorizontalAlignment | Token)?,
+	Name: string?,
+	Padding: (UDim | Token)?,
+	ScrollWheelInputEnabled: (boolean | Token)?,
+	SortOrder: (Enum.SortOrder | Token)?,
+	TouchInputEnabled: (boolean | Token)?,
+	TweenTime: (number | Token)?,
+	VerticalAlignment: (Enum.VerticalAlignment | Token)?,
+
+	Priority: number?,
+
+	Transition: UIPageLayoutTransition?,
+
+	[string]: nil,
+}
+
+export type UIPageLayoutTransition = {
+	Animated: TweenInfo?,
+	Archivable: TweenInfo?,
+	Circular: TweenInfo?,
+	EasingDirection: TweenInfo?,
+	EasingStyle: TweenInfo?,
+	FillDirection: TweenInfo?,
+	GamepadInputEnabled: TweenInfo?,
+	HorizontalAlignment: TweenInfo?,
+	Name: TweenInfo?,
+	Padding: TweenInfo?,
+	ScrollWheelInputEnabled: TweenInfo?,
+	SortOrder: TweenInfo?,
+	TouchInputEnabled: TweenInfo?,
+	TweenTime: TweenInfo?,
+	VerticalAlignment: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIScale = {
+	Archivable: (boolean | Token)?,
+	Name: string?,
+	Scale: (number | Token)?,
+
+	Priority: number?,
+
+	Transition: UIScaleTransition?,
+
+	[string]: nil,
+}
+
+export type UIScaleTransition = {
+	Archivable: TweenInfo?,
+	Name: TweenInfo?,
+	Scale: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIShadow = {
+	Archivable: (boolean | Token)?,
+	BlurRadius: (UDim | Token)?,
+	Color: (Color3 | Token)?,
+	Enabled: (boolean | Token)?,
+	Inset: (boolean | Token)?,
+	Mode: (Enum.ApplyShadowMode | Token)?,
+	Name: string?,
+	Offset: (UDim2 | Token)?,
+	ShowBehindParent: (boolean | Token)?,
+	Spread: (UDim2 | Token)?,
+	Transparency: (number | Token)?,
+	ZIndex: (number | Token)?,
+
+	Priority: number?,
+
+	Transition: UIShadowTransition?,
+
+	[string]: nil,
+}
+
+export type UIShadowTransition = {
+	Archivable: TweenInfo?,
+	BlurRadius: TweenInfo?,
+	Color: TweenInfo?,
+	Enabled: TweenInfo?,
+	Inset: TweenInfo?,
+	Mode: TweenInfo?,
+	Name: TweenInfo?,
+	Offset: TweenInfo?,
+	ShowBehindParent: TweenInfo?,
+	Spread: TweenInfo?,
+	Transparency: TweenInfo?,
+	ZIndex: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UISizeConstraint = {
+	Archivable: (boolean | Token)?,
+	MaxSize: (Vector2 | Token)?,
+	MinSize: (Vector2 | Token)?,
+	Name: string?,
+
+	Priority: number?,
+
+	Transition: UISizeConstraintTransition?,
+
+	[string]: nil,
+}
+
+export type UISizeConstraintTransition = {
+	Archivable: TweenInfo?,
+	MaxSize: TweenInfo?,
+	MinSize: TweenInfo?,
+	Name: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UIStroke = {
+	ApplyStrokeMode: (Enum.ApplyStrokeMode | Token)?,
+	Archivable: (boolean | Token)?,
+	BorderOffset: (UDim | Token)?,
+	BorderStrokePosition: (Enum.BorderStrokePosition | Token)?,
+	Color: (Color3 | Token)?,
+	Enabled: (boolean | Token)?,
+	LineJoinMode: (Enum.LineJoinMode | Token)?,
+	Name: string?,
+	StrokeSizingMode: (Enum.StrokeSizingMode | Token)?,
+	Thickness: (number | Token)?,
+	Transparency: (number | Token)?,
+	ZIndex: (number | Token)?,
+
+	Priority: number?,
+
+	Transition: UIStrokeTransition?,
+
+	[string]: nil,
+}
+
+export type UIStrokeTransition = {
+	ApplyStrokeMode: TweenInfo?,
+	Archivable: TweenInfo?,
+	BorderOffset: TweenInfo?,
+	BorderStrokePosition: TweenInfo?,
+	Color: TweenInfo?,
+	Enabled: TweenInfo?,
+	LineJoinMode: TweenInfo?,
+	Name: TweenInfo?,
+	StrokeSizingMode: TweenInfo?,
+	Thickness: TweenInfo?,
+	Transparency: TweenInfo?,
+	ZIndex: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UITableLayout = {
+	Archivable: (boolean | Token)?,
+	FillDirection: (Enum.FillDirection | Token)?,
+	FillEmptySpaceColumns: (boolean | Token)?,
+	FillEmptySpaceRows: (boolean | Token)?,
+	HorizontalAlignment: (Enum.HorizontalAlignment | Token)?,
+	MajorAxis: (Enum.TableMajorAxis | Token)?,
+	Name: string?,
+	Padding: (UDim2 | Token)?,
+	SortOrder: (Enum.SortOrder | Token)?,
+	VerticalAlignment: (Enum.VerticalAlignment | Token)?,
+
+	Priority: number?,
+
+	Transition: UITableLayoutTransition?,
+
+	[string]: nil,
+}
+
+export type UITableLayoutTransition = {
+	Archivable: TweenInfo?,
+	FillDirection: TweenInfo?,
+	FillEmptySpaceColumns: TweenInfo?,
+	FillEmptySpaceRows: TweenInfo?,
+	HorizontalAlignment: TweenInfo?,
+	MajorAxis: TweenInfo?,
+	Name: TweenInfo?,
+	Padding: TweenInfo?,
+	SortOrder: TweenInfo?,
+	VerticalAlignment: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+export type UITextSizeConstraint = {
+	Archivable: (boolean | Token)?,
+	MaxTextSize: (number | Token)?,
+	MinTextSize: (number | Token)?,
+	Name: string?,
+
+	Priority: number?,
+
+	Transition: UITextSizeConstraintTransition?,
+
+	[string]: nil,
+}
+
+export type UITextSizeConstraintTransition = {
+	Archivable: TweenInfo?,
+	MaxTextSize: TweenInfo?,
+	MinTextSize: TweenInfo?,
+	Name: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
+-- Which keys configure the rule rather than naming a property it paints.
+local RuleKeys: { [string]: true } = {
+	Priority = true,
+	Transition = true,
+}
+
+-- The "::" names the engine can create, without the prefix.
+local Modifiers: { [string]: true } = {
+	UIAspectRatioConstraint = true,
+	UICorner = true,
+	UIDragDetector = true,
+	UIFlexItem = true,
+	UIGradient = true,
+	UIGridLayout = true,
+	UIListLayout = true,
+	UIPadding = true,
+	UIPageLayout = true,
+	UIScale = true,
+	UIShadow = true,
+	UISizeConstraint = true,
+	UIStroke = true,
+	UITableLayout = true,
+	UITextSizeConstraint = true,
+}
+
+return {
+	RuleKeys = RuleKeys,
+	Modifiers = Modifiers,
+}

@@ -295,18 +295,119 @@ fn a_name_meaning_two_things_keeps_both() {
     assert!(transparency.owners.len() > 1);
 }
 
+fn modifier_classes(flat: &ir::Flat) -> Vec<&str> {
+    flat.modifiers
+        .iter()
+        .map(|modifier| modifier.class.as_str())
+        .collect()
+}
+
 #[test]
 fn the_modifiers_are_the_creatable_ui_components() {
     let flat = flat(false);
+    let classes = modifier_classes(&flat);
     for modifier in ["UICorner", "UIStroke", "UIGradient", "UIPadding"] {
         assert!(
-            flat.modifiers.iter().any(|m| m == modifier),
+            classes.contains(&modifier),
             "{modifier} should be an instance modifier"
         );
     }
     // Abstract, so it can never be created as a pseudo-instance.
-    assert!(!flat.modifiers.iter().any(|m| m == "UIComponent"));
-    assert!(!flat.modifiers.iter().any(|m| m == "UIBase"));
+    assert!(!classes.contains(&"UIComponent"));
+    assert!(!classes.contains(&"UIBase"));
+}
+
+#[test]
+fn a_modifier_carries_only_its_own_class() {
+    // The one place this target can be precise. A rule selector names no class,
+    // so the rule level has to accept TextSize on a Frame; `["::UICorner"]`
+    // names exactly one, so a property that is real elsewhere is an error here.
+    let flat = flat(false);
+    let corner = flat
+        .modifiers
+        .iter()
+        .find(|modifier| modifier.class == "UICorner")
+        .expect("UICorner is a creatable UI component");
+
+    let names: Vec<&str> = corner
+        .properties
+        .iter()
+        .map(|property| property.name.as_str())
+        .collect();
+
+    assert!(names.contains(&"CornerRadius"));
+    // Inherited from Instance, like every class in the dump.
+    assert!(names.contains(&"Name"));
+    // Real properties, on other classes. The flat rule type accepts both.
+    assert!(!names.contains(&"TextSize"));
+    assert!(!names.contains(&"BackgroundColor3"));
+    // Denied everywhere, for the same reason as at the rule level.
+    assert!(!names.contains(&"Parent"));
+}
+
+#[test]
+fn a_modifier_is_a_rule_and_carries_the_rules_own_keys() {
+    // A modifier IS a StyleRule: the builder creates one, parents it, and the
+    // same Priority and Transition apply. Both are emitted inside its type,
+    // which a consumer cannot add afterwards through an intersection.
+    let flat = flat(false);
+    let emitted = emit::emit_style(&flat, emit::Indent::default());
+
+    assert!(emitted.source.contains("export type UICorner = {"));
+    assert!(emitted
+        .source
+        .contains("\tTransition: UICornerTransition?,"));
+    assert!(emitted
+        .source
+        .contains("export type UICornerTransition = {"));
+
+    // And the transition keys are that class's properties, not the whole
+    // surface: a TweenInfo for a property this modifier cannot paint is a typo
+    // in every case that matters.
+    let corner = emitted
+        .source
+        .split("export type UICornerTransition = {")
+        .nth(1)
+        .expect("the transition type is emitted")
+        .split("\n}")
+        .next()
+        .expect("it closes");
+    assert!(corner.contains("\tCornerRadius: TweenInfo?,"));
+    assert!(corner.contains("\tDefault: TweenInfo?,"));
+    assert!(!corner.contains("TextSize"));
+    assert!(corner.contains("\t[string]: nil,"));
+}
+
+#[test]
+fn the_runtime_lists_are_the_same_lists() {
+    // The lists a builder would otherwise keep its own copy of. A hand-written
+    // duplicate of a generated list is drift waiting to happen: the day the
+    // dump grows a rule key, a wrapper that wrote its own down sends it to
+    // SetProperties as though it were a property name.
+    let flat = flat(false);
+    let emitted = emit::emit_style(&flat, emit::Indent::default());
+
+    assert!(emitted
+        .source
+        .contains("local RuleKeys: { [string]: true } = {"));
+    assert!(emitted.source.contains("\tPriority = true,"));
+    assert!(emitted.source.contains("\tTransition = true,"));
+
+    assert!(emitted
+        .source
+        .contains("local Modifiers: { [string]: true } = {"));
+    for modifier in modifier_classes(&flat) {
+        assert!(
+            emitted.source.contains(&format!("\t{modifier} = true,")),
+            "{modifier} is missing from the runtime list"
+        );
+    }
+
+    // A module that returns nil cannot carry them, so the file returns a table
+    // now. Nothing else in it changed shape.
+    assert!(emitted
+        .source
+        .ends_with("return {\n\tRuleKeys = RuleKeys,\n\tModifiers = Modifiers,\n}\n"));
 }
 
 #[test]
@@ -371,9 +472,48 @@ fn the_styling_type_carries_the_rules_own_keys() {
     // Transitions are an engine capability, not a wrapper invention. The key is
     // emitted because the dump still declares the methods behind it.
     assert!(built.transitions);
-    assert!(emitted
+    assert!(emitted.source.contains("Transition: StyleRuleTransition?,"));
+}
+
+#[test]
+fn a_transition_names_a_property_so_it_is_closed_too() {
+    // SetPropertyTransitions takes property NAMES, so `{ [string]: TweenInfo }`
+    // left the same hole the properties themselves used to have: a misspelling
+    // is accepted by the type and silently does nothing at paint time.
+    let built = flat(false);
+    let emitted = emit::emit_style(&built, emit::Indent::default());
+
+    let block = emitted
         .source
-        .contains("Transition: { [string]: TweenInfo }?,"));
+        .split("export type StyleRuleTransition = {")
+        .nth(1)
+        .expect("the transition type is emitted")
+        .split("\n}")
+        .next()
+        .expect("it closes");
+
+    for property in &built.properties {
+        assert!(
+            block.contains(&format!("\t{}: TweenInfo?,", property.name)),
+            "{} has no transition key",
+            property.name
+        );
+    }
+
+    // The rule's own properties are NOT in it: a transition interpolates
+    // something the rule paints on the instance it matches, and Priority is a
+    // property of the rule itself.
+    for property in &built.rule_properties {
+        assert!(
+            !block.contains(&format!("\t{}: TweenInfo?,", property.name)),
+            "{} is the rule's own property and cannot be transitioned",
+            property.name
+        );
+    }
+
+    assert!(block.contains("\tDefault: TweenInfo?,"));
+    assert!(block.contains("\t[string]: nil,"));
+    assert!(!emitted.source.contains("{ [string]: TweenInfo }"));
 }
 
 #[test]

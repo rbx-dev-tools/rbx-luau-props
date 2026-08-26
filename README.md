@@ -43,6 +43,42 @@ and no warning, and `GetProperties` shows it is stored. Nothing below the type
 catches a typo, not the call, not the paint, and not a diff, since a rule's
 properties live in a hidden `BinaryString`.
 
+Two places escape that imprecision, and both are closed for the same reason the
+properties are:
+
+```lua
+local rule: StyleRuleProps.StyleRuleProps = {
+    ["::UICorner"] = {
+        CornerRadus = UDim.new(0, 8),       -- a type error: it is not CornerRadius
+        TextSize = 14,                      -- a type error: real, but not on UICorner
+    },
+    Transition = { BackgroundColour3 = TweenInfo.new(0.1) },  -- a type error too
+}
+```
+
+A `::` selector names exactly **one** class, unlike a rule selector, which names
+none. So every creatable modifier gets a closed type of its own
+(`StyleRuleProps.UICorner` and the other fourteen), and inside one a property
+that is perfectly real elsewhere is still an error. A `Transition` key names a
+property too, which `SetPropertyTransitions` looks up the same way
+`SetProperties` does, so that table is closed as well, with `Default` declared
+because it is the wrapper's spelling of `SetDefaultPropertyTransition` rather
+than a property name. Every property is offered a `TweenInfo`: the dump does not
+say which values the engine can interpolate, and one it cannot is ignored rather
+than refused.
+
+The module also **returns** two tables, so a builder does not keep its own copy
+of either list:
+
+```lua
+StyleRuleProps.RuleKeys    -- { Priority = true, Transition = true }
+StyleRuleProps.Modifiers   -- { UICorner = true, UIStroke = true, ... }
+```
+
+A builder has to know which keys configure the rule rather than name a property
+it paints, and which `::` names the engine can create. Written down beside a
+generated list saying the same thing, those are the two lists that go stale.
+
 **[`UiProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/UiProps.luau)**
 &nbsp;·&nbsp;
 **[`StyleRuleProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/StyleRuleProps.luau)**
@@ -172,6 +208,13 @@ Two consequences follow from the strict form, both measured rather than assumed:
   and why both are read from the dump rather than written down: `Priority` is a
   real `StyleRule` property, and `Transition` is emitted only while the dump
   still declares `SetPropertyTransitions` behind it.
+- It has to be applied everywhere, or it is applied nowhere. `Modifier =
+  { [string]: any }` and `Transition: { [string]: TweenInfo }` were open for a
+  while, and everything the flat type caught was lost again one level down: a
+  typo inside `["::UICorner"]`, a real property that is not on `UICorner`, and a
+  misspelled transition key were all accepted in silence, then stored by the
+  engine and never applied. Closing them is why the emitted file grew from 304
+  lines to 1122.
 
 ## Keeping it current
 
