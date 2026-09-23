@@ -79,9 +79,9 @@ A builder has to know which keys configure the rule rather than name a property
 it paints, and which `::` names the engine can create. Written down beside a
 generated list saying the same thing, those are the two lists that go stale.
 
-**[`UiProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/UiProps.luau)**
+**[`UiProps.luau`](https://raw.githubusercontent.com/rbx-dev-tools/rbx-luau-props/main/generated/UiProps.luau)**
 &nbsp;·&nbsp;
-**[`StyleRuleProps.luau`](https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/StyleRuleProps.luau)**
+**[`StyleRuleProps.luau`](https://raw.githubusercontent.com/rbx-dev-tools/rbx-luau-props/main/generated/StyleRuleProps.luau)**
 &nbsp;·&nbsp;
 [what they were built from](generated/manifest.json)
 
@@ -240,7 +240,7 @@ engine release this repository has been refreshed against. A one-line recipe is
 usually the whole integration:
 
 ```sh
-URL=https://raw.githubusercontent.com/rbx-forge/rbx-luau-props/main/generated/UiProps.luau
+URL=https://raw.githubusercontent.com/rbx-dev-tools/rbx-luau-props/main/generated/UiProps.luau
 curl -fsSL "$URL" -o src/shared/UiProps.luau
 ```
 
