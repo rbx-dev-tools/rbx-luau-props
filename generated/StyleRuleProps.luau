@@ -122,7 +122,7 @@ export type StyleRuleProps = {
 	FillEmptySpaceRows: (boolean | Token)?,
 	FlexMode: (Enum.UIFlexMode | Token)?,
 	Font: (Enum.Font | Token)?, -- hidden, on TextBox, TextButton, TextLabel
-	FontFace: (Font | Token)?, -- on InputActionLabel, TextBox, TextButton, TextLabel
+	FontFace: (Font | Token)?, -- on InputActionLabel, TextBox, TextButton, TextChannelWindow, TextLabel
 	GamepadInputEnabled: (boolean | Token)?,
 	GroupColor3: (Color3 | Token)?,
 	GroupTransparency: (number | Token)?,
@@ -263,10 +263,11 @@ export type StyleRuleProps = {
 	TopLeftRadius: (UDim | Token)?,
 	TopRightRadius: (UDim | Token)?,
 	TouchInputEnabled: (boolean | Token)?,
-	Transparency: (NumberSequence | number | Token)?, -- hidden, on GuiObject, UIGradient, UIShadow, UIStroke
+	Transparency: (NumberSequence | number | Token)?, -- on UIGradient, UIShadow, UIStroke
 	TweenTime: (number | Token)?,
 	Type: (Enum.GradientType | Token)?,
 	UIDragSpeedAxisMapping: (Enum.UIDragSpeedAxisMapping | Token)?,
+	UseDefaultFont: (boolean | Token)?,
 	VerticalAlignment: (Enum.VerticalAlignment | Token)?,
 	VerticalFlex: (Enum.UIFlexAlignment | Token)?,
 	VerticalScrollBarInset: (Enum.ScrollBarInset | Token)?,
@@ -535,6 +536,7 @@ export type StyleRuleTransition = {
 	TweenTime: TweenInfo?,
 	Type: TweenInfo?,
 	UIDragSpeedAxisMapping: TweenInfo?,
+	UseDefaultFont: TweenInfo?,
 	VerticalAlignment: TweenInfo?,
 	VerticalFlex: TweenInfo?,
 	VerticalScrollBarInset: TweenInfo?,

@@ -127,7 +127,6 @@ export type CanvasGroup = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -175,7 +174,6 @@ export type Frame = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -274,7 +272,6 @@ export type ImageButton = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -332,7 +329,6 @@ export type ImageLabel = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -389,7 +385,6 @@ export type InputActionLabel = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -434,7 +429,6 @@ export type RelativeGui = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -528,7 +522,6 @@ export type ScrollingFrame = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -640,7 +633,6 @@ export type TextBox = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -713,7 +705,6 @@ export type TextButton = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -735,7 +726,9 @@ export type TextButton = {
 
 export type TextChannelWindow = {
 	-- TextChannelWindow
+	FontFace: Font? | React.Binding<Font>?,
 	Target: TextChannel? | React.Binding<TextChannel>?,
+	UseDefaultFont: boolean? | React.Binding<boolean>?,
 
 	-- GuiObject
 	Active: boolean? | React.Binding<boolean>?,
@@ -761,7 +754,6 @@ export type TextChannelWindow = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -826,7 +818,6 @@ export type TextLabel = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -1147,7 +1138,6 @@ export type VideoDisplay = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -1205,7 +1195,6 @@ export type VideoFrame = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
@@ -1258,7 +1247,6 @@ export type ViewportFrame = {
 	SelectionOrder: number? | React.Binding<number>?,
 	Size: UDim2? | React.Binding<UDim2>?,
 	SizeConstraint: Enum.SizeConstraint? | React.Binding<Enum.SizeConstraint>?,
-	Transparency: number? | React.Binding<number>?, -- hidden
 	Visible: boolean? | React.Binding<boolean>?,
 	ZIndex: number? | React.Binding<number>?,
 
