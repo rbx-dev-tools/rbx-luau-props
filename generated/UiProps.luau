@@ -850,6 +850,20 @@ export type UIAspectRatioConstraint = {
 	[any]: any,
 }
 
+export type UIBlur = {
+	-- UIBlur
+	Color: Color3? | React.Binding<Color3>?,
+	Enabled: boolean? | React.Binding<boolean>?,
+	Strength: Enum.UIBlurStrength? | React.Binding<Enum.UIBlurStrength>?,
+	Transparency: number? | React.Binding<number>?,
+
+	-- Instance
+	Archivable: boolean? | React.Binding<boolean>?,
+	Name: string? | React.Binding<string>?,
+
+	[any]: any,
+}
+
 export type UICorner = {
 	-- UICorner
 	BottomLeftRadius: UDim? | React.Binding<UDim>?,
