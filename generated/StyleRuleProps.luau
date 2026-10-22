@@ -90,7 +90,7 @@ export type StyleRuleProps = {
 	ClipToDeviceSafeArea: (boolean | Token)?,
 	ClipsDescendants: (boolean | Token)?, -- on BillboardGui, GuiObject, SurfaceGui
 	Closed: (boolean | Token)?,
-	Color: (Color3 | ColorSequence | Token)?, -- on UIGradient, UIShadow, UIStroke
+	Color: (Color3 | ColorSequence | Token)?, -- on UIBlur, UIGradient, UIShadow, UIStroke
 	Color3: (Color3 | Token)?,
 	CornerRadius: (UDim | Token)?,
 	CurrentCamera: (Camera | Token)?,
@@ -110,7 +110,7 @@ export type StyleRuleProps = {
 	EasingStyle: (Enum.EasingStyle | Token)?,
 	ElasticBehavior: (Enum.ElasticBehavior | Token)?,
 	EnableVideoAds: (boolean | Token)?,
-	Enabled: (boolean | Token)?, -- on LayerCollector, UIDragDetector, UIGradient, UIShadow, UIStroke
+	Enabled: (boolean | Token)?, -- on LayerCollector, UIBlur, UIDragDetector, UIGradient, UIShadow, UIStroke
 	ExtentsOffset: (Vector3 | Token)?,
 	ExtentsOffsetWorldSpace: (Vector3 | Token)?,
 	Face: (Enum.NormalId | Token)?,
@@ -211,7 +211,7 @@ export type StyleRuleProps = {
 	ScrollWheelInputEnabled: (boolean | Token)?,
 	ScrollingDirection: (Enum.ScrollingDirection | Token)?,
 	ScrollingEnabled: (boolean | Token)?,
-	Selectable: (boolean | Token)?,
+	Selectable: (boolean | Token)?, -- on GuiObject, UIDragDetector
 	Selected: (boolean | Token)?,
 	SelectionBehaviorDown: (Enum.SelectionBehavior | Token)?,
 	SelectionBehaviorLeft: (Enum.SelectionBehavior | Token)?,
@@ -235,6 +235,7 @@ export type StyleRuleProps = {
 	SortOrder: (Enum.SortOrder | Token)?,
 	Spread: (UDim2 | Token)?,
 	StartCorner: (Enum.StartCorner | Token)?,
+	Strength: (Enum.UIBlurStrength | Token)?,
 	StrokeSizingMode: (Enum.StrokeSizingMode | Token)?,
 	StudsOffset: (Vector3 | Token)?,
 	StudsOffsetWorldSpace: (Vector3 | Token)?,
@@ -263,7 +264,7 @@ export type StyleRuleProps = {
 	TopLeftRadius: (UDim | Token)?,
 	TopRightRadius: (UDim | Token)?,
 	TouchInputEnabled: (boolean | Token)?,
-	Transparency: (NumberSequence | number | Token)?, -- on UIGradient, UIShadow, UIStroke
+	Transparency: (NumberSequence | number | Token)?, -- on UIBlur, UIGradient, UIShadow, UIStroke
 	TweenTime: (number | Token)?,
 	Type: (Enum.GradientType | Token)?,
 	UIDragSpeedAxisMapping: (Enum.UIDragSpeedAxisMapping | Token)?,
@@ -289,6 +290,7 @@ export type StyleRuleProps = {
 	-- built as a child StyleRule whose selector is the key, and its type is
 	-- the only precise one in this file.
 	["::UIAspectRatioConstraint"]: UIAspectRatioConstraint?,
+	["::UIBlur"]: UIBlur?,
 	["::UICorner"]: UICorner?,
 	["::UIDragDetector"]: UIDragDetector?,
 	["::UIFlexItem"]: UIFlexItem?,
@@ -504,6 +506,7 @@ export type StyleRuleTransition = {
 	SortOrder: TweenInfo?,
 	Spread: TweenInfo?,
 	StartCorner: TweenInfo?,
+	Strength: TweenInfo?,
 	StrokeSizingMode: TweenInfo?,
 	StudsOffset: TweenInfo?,
 	StudsOffsetWorldSpace: TweenInfo?,
@@ -587,6 +590,35 @@ export type UIAspectRatioConstraintTransition = {
 	[string]: nil,
 }
 
+export type UIBlur = {
+	Archivable: (boolean | Token)?,
+	Color: (Color3 | Token)?,
+	Enabled: (boolean | Token)?,
+	Name: string?,
+	Strength: (Enum.UIBlurStrength | Token)?,
+	Transparency: (number | Token)?,
+
+	Priority: number?,
+
+	Transition: UIBlurTransition?,
+
+	[string]: nil,
+}
+
+export type UIBlurTransition = {
+	Archivable: TweenInfo?,
+	Color: TweenInfo?,
+	Enabled: TweenInfo?,
+	Name: TweenInfo?,
+	Strength: TweenInfo?,
+	Transparency: TweenInfo?,
+
+	-- every property this rule paints and has no TweenInfo of its own
+	Default: TweenInfo?,
+
+	[string]: nil,
+}
+
 export type UICorner = {
 	Archivable: (boolean | Token)?,
 	BottomLeftRadius: (UDim | Token)?,
@@ -640,6 +672,7 @@ export type UIDragDetector = {
 	Name: string?,
 	ReferenceUIInstance: (GuiObject | Token)?,
 	ResponseStyle: (Enum.UIDragDetectorResponseStyle | Token)?,
+	Selectable: (boolean | Token)?,
 	SelectionModeDragSpeed: (UDim2 | Token)?,
 	SelectionModeRotateSpeed: (number | Token)?,
 	UIDragSpeedAxisMapping: (Enum.UIDragSpeedAxisMapping | Token)?,
@@ -673,6 +706,7 @@ export type UIDragDetectorTransition = {
 	Name: TweenInfo?,
 	ReferenceUIInstance: TweenInfo?,
 	ResponseStyle: TweenInfo?,
+	Selectable: TweenInfo?,
 	SelectionModeDragSpeed: TweenInfo?,
 	SelectionModeRotateSpeed: TweenInfo?,
 	UIDragSpeedAxisMapping: TweenInfo?,
@@ -1102,6 +1136,7 @@ local RuleKeys = {
 -- The "::" names the engine can create, without the prefix.
 local Modifiers = {
 	UIAspectRatioConstraint = true,
+	UIBlur = true,
 	UICorner = true,
 	UIDragDetector = true,
 	UIFlexItem = true,

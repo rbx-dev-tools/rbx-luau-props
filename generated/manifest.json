@@ -1,12 +1,12 @@
 {
-  "roblox_version": "0.740.0.7400927",
-  "roblox_upload": "version-3afcc74cf8b04b5d",
-  "dump_sha256": "b233988420268a70e8012da9b1a40c12cafb8c7acf17ff97e22b62751017a4db",
-  "types_sha256": "9959267578bda3f02e2c894d9caea1733e0079d2a8b76783069a6f79382ad069",
-  "classes": 34,
-  "properties": 878,
-  "skipped_deprecated": 120,
-  "style_sha256": "3fe652f6bfde34f8b5d6331e140a65d1a902e1cf0af806af8e055295192ca2d6",
-  "style_properties": 236,
-  "style_modifiers": 15
+  "roblox_version": "0.744.0.7441077",
+  "roblox_upload": "version-7aaa6838d36c4448",
+  "dump_sha256": "2c2441134f26d6b172ad862afb86552c9d2d1b0a53ca10d67ea9abb7bdc2f906",
+  "types_sha256": "7f5f4746bb59fe53bfcc525ed78caf7c2b8e1177f41c729614f9355b9d6ffae2",
+  "classes": 35,
+  "properties": 885,
+  "skipped_deprecated": 121,
+  "style_sha256": "7f643b509efbd0888a017c6cb83ada935d1d183c8855708dc3b4a5bc2d737592",
+  "style_properties": 237,
+  "style_modifiers": 16
 }
