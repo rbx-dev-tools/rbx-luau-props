@@ -850,6 +850,20 @@ export type UIAspectRatioConstraint = {
 	[any]: any,
 }
 
+export type UIBlur = {
+	-- UIBlur
+	Color: Color3? | React.Binding<Color3>?,
+	Enabled: boolean? | React.Binding<boolean>?,
+	Strength: Enum.UIBlurStrength? | React.Binding<Enum.UIBlurStrength>?,
+	Transparency: number? | React.Binding<number>?,
+
+	-- Instance
+	Archivable: boolean? | React.Binding<boolean>?,
+	Name: string? | React.Binding<string>?,
+
+	[any]: any,
+}
+
 export type UICorner = {
 	-- UICorner
 	BottomLeftRadius: UDim? | React.Binding<UDim>?,
@@ -886,6 +900,7 @@ export type UIDragDetector = {
 	MinDragTranslation: UDim2? | React.Binding<UDim2>?,
 	ReferenceUIInstance: GuiObject? | React.Binding<GuiObject>?,
 	ResponseStyle: Enum.UIDragDetectorResponseStyle? | React.Binding<Enum.UIDragDetectorResponseStyle>?,
+	Selectable: boolean? | React.Binding<boolean>?,
 	SelectionModeDragSpeed: UDim2? | React.Binding<UDim2>?,
 	SelectionModeRotateSpeed: number? | React.Binding<number>?,
 	UIDragSpeedAxisMapping: Enum.UIDragSpeedAxisMapping? | React.Binding<Enum.UIDragSpeedAxisMapping>?,
